@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stockroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3f5f2;
+    --card: #ffffff;
+    --ink: #17302b;
+    --muted: #5d716c;
+    --line: #d9e0dc;
+    --brand: #1f6f5c;
+    --brand-dark: #165244;
+    --warn: #b4540a;
+    --warn-bg: #e7d6c4;
+    --danger: #b3261e;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 15px/1.5 "Public Sans", system-ui, sans-serif; }
+  h1, h2, .stat-num { font-family: "Bricolage Grotesque", "Public Sans", sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
+  header { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  h1 { font-size: 34px; margin: 0; letter-spacing: -0.02em; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  .head-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .who { color: var(--muted); font-size: 14px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 8px 14px; }
+  button:hover { border-color: var(--brand); }
+  button:focus-visible, input:focus-visible { outline: 3px solid #8cc9b9; outline-offset: 1px; }
+  .primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  .primary:hover { background: var(--brand-dark); }
+  .danger { color: var(--danger); }
+
+  .summary { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .stat.lead { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .stat.lead .stat-label { color: #cfe8e0; }
+  .stat-label { color: var(--muted); font-size: 13px; }
+  .stat-num { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
+  .stat.alert .stat-num { color: var(--warn); }
+
+  .cats { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 22px; }
+  .cats h2 { font-size: 16px; margin: 0 0 12px; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 80px; gap: 12px; align-items: center; margin: 6px 0; font-size: 14px; }
+  .bar { height: 10px; background: #e6ece9; border-radius: 5px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--brand); }
+  .bar-row .amt { text-align: right; color: var(--muted); }
+
+  .tools { display: flex; gap: 12px; margin-bottom: 12px; }
+  .tools input { flex: 1; }
+  input { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); width: 100%; }
+
+  .table-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  th { font-size: 13px; color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--warn-bg); color: var(--warn); margin-left: 8px; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .actions button { padding: 5px 10px; font-size: 13px; }
+  .empty { padding: 36px; text-align: center; color: var(--muted); }
+
+  dialog { border: 0; border-radius: 12px; padding: 0; width: min(440px, 92vw); box-shadow: 0 20px 50px rgba(23,48,43,.25); color: var(--ink); }
+  dialog::backdrop { background: rgba(23,48,43,.45); }
+  form { padding: 22px; display: grid; gap: 14px; }
+  form h2 { margin: 0; font-size: 22px; }
+  label { display: grid; gap: 4px; font-size: 13px; font-weight: 500; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .err { color: var(--danger); font-size: 13px; min-height: 18px; margin: 0; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+  @media (max-width: 760px) { .summary { grid-template-columns: 1fr 1fr; } .stat.lead { grid-column: span 2; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Stockroom</h1>
+      <p>What's on the shelves, what's running low, and what it's worth.</p>
+    </div>
+    <div class="head-actions"><span class="who" id="who"></span><button id="logoutBtn">Log out</button><button class="primary" id="addBtn">Add item</button></div>
+  </header>
+
+  <section class="summary" aria-label="Summary">
+    <div class="stat lead"><div class="stat-label">Inventory value</div><div class="stat-num" id="sValue">–</div></div>
+    <div class="stat"><div class="stat-label">Products</div><div class="stat-num" id="sItems">–</div></div>
+    <div class="stat"><div class="stat-label">Units in stock</div><div class="stat-num" id="sUnits">–</div></div>
+    <div class="stat alert"><div class="stat-label">Needs reorder</div><div class="stat-num" id="sLow">–</div></div>
+  </section>
+
+  <section class="cats" aria-label="Value by category">
+    <h2>Value by category</h2>
+    <div id="catBars"></div>
+  </section>
+
+  <div class="tools">
+    <input type="search" id="search" placeholder="Search by name or category" aria-label="Search items">
+  </div>
+
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr><th>Item</th><th>Category</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Value</th><th></th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>No items match. Add one to get started.</div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <form id="form" method="dialog">
+    <h2 id="dlgTitle">Add item</h2>
+    <label>Name <input name="name" required></label>
+    <label>Category <input name="category" required list="catList"></label>
+    <datalist id="catList"></datalist>
+    <div class="two">
+      <label>Quantity <input name="quantity" type="number" min="0" step="1" value="0" required></label>
+      <label>Price <input name="price" type="number" min="0" step="0.01" value="0" required></label>
+    </div>
+    <label>Reorder when quantity is at or below <input name="reorder_level" type="number" min="0" step="1" value="5" required></label>
+    <p class="err" id="err" role="alert"></p>
+    <div class="form-actions">
+      <button type="button" id="cancel">Cancel</button>
+      <button class="primary" type="submit" id="saveBtn">Save item</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const money = (n) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n);
+let editingId = null;
+
+async function api(path, options) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  if (res.status === 401) { window.location.href = '/login.html'; throw new Error('Please sign in.'); }
+  if (res.status === 204) return null;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+  return data;
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+async function loadStats() {
+  const s = await api('/api/stats');
+  $('sValue').textContent = money(s.value);
+  $('sItems').textContent = s.items;
+  $('sUnits').textContent = s.units;
+  $('sLow').textContent = s.low;
+  const max = Math.max(...s.byCategory.map((c) => c.value), 1);
+  $('catBars').innerHTML = s.byCategory.map((c) => `
+    <div class="bar-row">
+      <span>${esc(c.category)}</span>
+      <div class="bar"><span style="width:${(c.value / max) * 100}%"></span></div>
+      <span class="amt">${money(c.value)}</span>
+    </div>`).join('') || '<p class="empty">No categories yet.</p>';
+  $('catList').innerHTML = s.byCategory.map((c) => `<option value="${esc(c.category)}">`).join('');
+}
+
+async function loadItems() {
+  const items = await api('/api/items?q=' + encodeURIComponent($('search').value));
+  $('empty').hidden = items.length > 0;
+  $('rows').innerHTML = items.map((i) => `
+    <tr>
+      <td>${esc(i.name)}${i.quantity <= i.reorder_level ? '<span class="badge">Low stock</span>' : ''}</td>
+      <td>${esc(i.category)}</td>
+      <td class="num">${i.quantity}</td>
+      <td class="num">${money(i.price)}</td>
+      <td class="num">${money(i.quantity * i.price)}</td>
+      <td><div class="actions">
+        <button data-edit="${i.id}">Edit</button>
+        <button class="danger" data-del="${i.id}" data-name="${esc(i.name)}">Delete</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+const refresh = () => Promise.all([loadItems(), loadStats()]);
+
+function openForm(item) {
+  editingId = item ? item.id : null;
+  $('dlgTitle').textContent = item ? 'Edit item' : 'Add item';
+  $('err').textContent = '';
+  const f = $('form');
+  f.name.value = item?.name ?? '';
+  f.category.value = item?.category ?? '';
+  f.quantity.value = item?.quantity ?? 0;
+  f.price.value = item?.price ?? 0;
+  f.reorder_level.value = item?.reorder_level ?? 5;
+  $('dlg').showModal();
+  f.name.focus();
+}
+
+$('addBtn').onclick = () => openForm(null);
+$('cancel').onclick = () => $('dlg').close();
+
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const body = JSON.stringify({
+    name: f.name.value, category: f.category.value, quantity: f.quantity.value,
+    price: f.price.value, reorder_level: f.reorder_level.value,
+  });
+  try {
+    if (editingId) await api('/api/items/' + editingId, { method: 'PUT', body });
+    else await api('/api/items', { method: 'POST', body });
+    $('dlg').close();
+    refresh();
+  } catch (err) { $('err').textContent = err.message; }
+});
+
+$('rows').addEventListener('click', async (e) => {
+  const edit = e.target.closest('[data-edit]');
+  const del = e.target.closest('[data-del]');
+  if (edit) openForm(await api('/api/items/' + edit.dataset.edit));
+  if (del && confirm(`Delete "${del.dataset.name}"? This can't be undone.`)) {
+    await api('/api/items/' + del.dataset.del, { method: 'DELETE' });
+    refresh();
+  }
+});
+
+let timer;
+$('search').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(loadItems, 200); });
+
+$('logoutBtn').onclick = async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+};
+api('/api/me').then((m) => { $('who').textContent = 'Signed in as ' + m.user; });
+
+refresh();
+</script>
+</body>
+</html>
